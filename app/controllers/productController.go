@@ -53,7 +53,5 @@ func (server *Server) GetProductByCode(c echo.Context) error {
 
 	}
 
-	fmt.Println("----------  3   ----------  ")
-
 	return c.JSON(http.StatusOK, product)
 }

@@ -1,5 +1,6 @@
-INSERT INTO Products (code, name, price, stock, short_description, long_description)
-VALUES
+package database
+
+const insertProductsRecords = `INSERT INTO Products (code, name, price, stock, short_description, long_description) VALUES
     ('P001', 'Product 1', 10.0000, 10, 'Short description for Product 1', 'Long description for Product 1'),
     ('P002', 'Product 2', 10.0000, 10, 'Short description for Product 2', 'Long description for Product 2'),
     ('P003', 'Product 3', 10.0000, 10, 'Short description for Product 3', 'Long description for Product 3'),
@@ -30,3 +31,4 @@ VALUES
     ('P028', 'Product 28', 10.0000, 10, 'Short description for Product 28', 'Long description for Product 28'),
     ('P029', 'Product 29', 10.0000, 10, 'Short description for Product 29', 'Long description for Product 29'),
     ('P030', 'Product 30', 10.0000, 10, 'Short description for Product 30', 'Long description for Product 30');
+`
