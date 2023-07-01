@@ -26,7 +26,7 @@ func Run() {
 
 	dbConfig.DBUsername = getEnv("DB_USER", "test")
 	dbConfig.DBPassword = getEnv("DB_PASSWORD", "test")
-	dbConfig.DBName = getEnv("DB_NAME", "thesisBase")
+	dbConfig.DBName = getEnv("DB_NAME", "mvc_approach")
 
 	server.InitServer(dbConfig)
 	server.Run(":" + "8888")

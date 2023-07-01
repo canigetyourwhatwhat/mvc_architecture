@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"log"
+	"mvc_go/database"
 	"net/http"
 )
 
@@ -48,6 +49,9 @@ func (server *Server) initializeDB(dbConfig DBConfig) {
 	if err = db.Ping(); err != nil {
 		panic(fmt.Sprintf("Ping to DB failed: %v", err))
 	}
+
+	database.CreateTable(db)
+	database.SeedTable(db)
 
 	server.DB = db
 }
