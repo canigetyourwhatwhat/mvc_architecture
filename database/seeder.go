@@ -17,11 +17,19 @@ func CreateTable(db *sqlx.DB) {
 }
 
 func SeedTable(db *sqlx.DB) {
-	seedsFile, err := os.ReadFile("database/seed.sql")
+	var count int
+	err := db.Get(&count, "select count(id) from Products")
 	if err != nil {
-		panic(fmt.Sprintf("Failed to read SQL file to seed data: %v", err))
+		panic(fmt.Sprintf("Failed to get count of Products: %v", err))
 	}
-	if _, err = db.Exec(string(seedsFile)); err != nil {
-		panic(fmt.Sprintf("Failed to execute SQL file to seed data: %v", err))
+
+	if count < 30 {
+		seedsFile, err := os.ReadFile("database/seed.sql")
+		if err != nil {
+			panic(fmt.Sprintf("Failed to read SQL file to seed data: %v", err))
+		}
+		if _, err = db.Exec(string(seedsFile)); err != nil {
+			panic(fmt.Sprintf("Failed to execute SQL file to seed data: %v", err))
+		}
 	}
 }

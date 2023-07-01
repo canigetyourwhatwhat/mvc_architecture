@@ -9,10 +9,9 @@ func (server *Server) initializeRoutes() {
 	server.Router = echo.New()
 	server.Router.Router().Add(http.MethodGet, "/", server.Home)
 
-	//server.Router.HandleFunc("/", server.Home).Methods("GET")
-	//server.Router.HandleFunc("/products", server.Products).Methods("GET")
-	//server.Router.HandleFunc("/products/{slug}", server.GetProductBySlug).Methods("GET")
-	//
+	server.Router.GET("/products/list", server.ListProducts)
+	server.Router.GET("/products/:code", server.GetProductByCode)
+
 	//server.Router.HandleFunc("/carts", server.GetCart).Methods("GET")
 	//server.Router.HandleFunc("/carts", server.AddItemToCart).Methods("POST")
 	//server.Router.HandleFunc("/carts/update", server.UpdateCart).Methods("POST")
