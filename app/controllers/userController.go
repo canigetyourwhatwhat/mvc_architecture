@@ -17,7 +17,7 @@ func (server *Server) RegisterUser(c echo.Context) error {
 
 	_, err := user.GetUserInfoByUsername(server.DB, user.Username)
 	if err != nil && err != sql.ErrNoRows {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, "Failed GetUserInfoByUsername: "+err.Error())
 	}
 	if err == nil {
 		return c.JSON(http.StatusBadRequest, "This username is already taken ")
@@ -47,7 +47,7 @@ func (server *Server) Login(c echo.Context) error {
 	var user *entity.User
 	user, err := user.GetUserInfoByUsername(server.DB, input.Username)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "User doesn't exist: "+err.Error())
+		return c.JSON(http.StatusInternalServerError, "User doesn't exist: ")
 	}
 
 	err = user.ComparePassword(input.Password)
@@ -55,18 +55,17 @@ func (server *Server) Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Password is incorrect: "+err.Error())
 	}
 
-	sessionID, err := user.CreateSessionID()
+	var session entity.Session
+	sessionID, err := session.CreateSessionID()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed to create sessionID: "+err.Error())
 	}
 
-	session := &entity.Session{
-		ID:        sessionID,
-		UserID:    user.ID,
-		ExpiresAt: time.Now().AddDate(0, 0, 7),
-	}
+	session.ID = sessionID
+	session.UserID = user.ID
+	session.ExpiresAt = time.Now().AddDate(0, 0, 7)
 
-	err = user.CreateSession(server.DB, session)
+	err = session.CreateOrUpdateSession(server.DB)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed to create session: "+err.Error())
 	}

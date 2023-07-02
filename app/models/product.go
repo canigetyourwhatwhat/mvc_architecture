@@ -9,7 +9,7 @@ type Product struct {
 	ID               string    `db:"id"`
 	Code             string    `db:"code"`
 	Name             string    `db:"name"`
-	Price            float64   `db:"price"`
+	Price            float32   `db:"price"`
 	Stock            int       `db:"stock"`
 	ShortDescription string    `db:"short_description"`
 	LongDescription  string    `db:"long_description"`
@@ -37,7 +37,7 @@ func (p *Product) GetProducts(db *sqlx.DB, perPage int, page int) ([]Product, in
 	return products, count, nil
 }
 
-func (p *Product) FindByCode(db *sqlx.DB, code string) (*Product, error) {
+func (p *Product) GetProductByCode(db *sqlx.DB, code string) (*Product, error) {
 	var product Product
 
 	err := db.Get(&product, "select * from Products where code = ?", code)

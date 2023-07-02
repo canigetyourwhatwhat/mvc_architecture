@@ -1,12 +1,8 @@
 package entity
 
 import (
-	"crypto/rand"
-	"encoding/base32"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
-	"io"
-	"strings"
 	"time"
 )
 
@@ -23,12 +19,6 @@ type User struct {
 type LoginInput struct {
 	Username string `json:"Username"`
 	Password string `json:"Password"`
-}
-
-type Session struct {
-	ID        string    `db:"id"`
-	UserID    string    `db:"userId"`
-	ExpiresAt time.Time `db:"expiresAt"`
 }
 
 func (u *User) CreateUser(db *sqlx.DB) error {
@@ -68,39 +58,6 @@ func (u *User) GetUserInfoByUsername(db *sqlx.DB, username string) (*User, error
 		return nil, err
 	}
 	return &user, nil
-}
-
-func (u *User) CreateSessionID() (string, error) {
-	sidByte := make([]byte, 32)
-	_, err := io.ReadFull(rand.Reader, sidByte)
-	if err != nil {
-		return "", err
-	}
-	sessionID := strings.TrimRight(base32.StdEncoding.EncodeToString(sidByte), "=")
-
-	return sessionID, nil
-}
-
-func (u *User) CreateSession(db *sqlx.DB, session *Session) error {
-	query := `
-	INSERT INTO sessions
-	(
-		id,
-		userId,
-		expiresAt
-	)
-	VALUES
-	(
-		:id,
-		:userId,
-		:expiresAt
-	)
-	`
-	_, err := db.NamedExec(query, session)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (u *User) ComparePassword(password string) error {

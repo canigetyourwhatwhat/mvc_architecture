@@ -15,6 +15,12 @@ func CreateTable(db *sqlx.DB) {
 	if _, err := db.Exec(createSessionTable); err != nil {
 		panic(fmt.Sprintf("Failed to create session table: %v", err))
 	}
+	if _, err := db.Exec(createCartItemTable); err != nil {
+		panic(fmt.Sprintf("Failed to create cartItem table: %v", err))
+	}
+	if _, err := db.Exec(createCartTable); err != nil {
+		panic(fmt.Sprintf("Failed to create cart table: %v", err))
+	}
 }
 
 func SeedTable(db *sqlx.DB) {

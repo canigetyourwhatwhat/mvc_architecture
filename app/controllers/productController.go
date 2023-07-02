@@ -47,7 +47,7 @@ func (server *Server) GetProductByCode(c echo.Context) error {
 	}
 
 	productModel := entity.Product{}
-	product, err := productModel.FindByCode(server.DB, code)
+	product, err := productModel.GetProductByCode(server.DB, code)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 
