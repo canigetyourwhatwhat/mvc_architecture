@@ -15,7 +15,9 @@ func (server *Server) initializeRoutes() {
 	server.Router.GET("/products/list", server.ListProducts)
 	server.Router.GET("/products/:code", server.GetProductByCode)
 
-	server.Router.POST("/cart", server.AddItemToCart)
+	server.Router.POST("/cart/add", server.AddItemToCart)
+	server.Router.DELETE("/cart", server.RemoveItemFromCart)
+	server.Router.GET("/cart/:session", server.GetInProgressCart)
 
 	//server.Router.HandleFunc("/carts", server.GetCart).Methods("GET")
 	//server.Router.HandleFunc("/carts/update", server.UpdateCart).Methods("POST")

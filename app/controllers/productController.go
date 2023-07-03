@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/labstack/echo/v4"
 	entity "mvc_go/app/models"
 	"net/http"
@@ -9,8 +8,6 @@ import (
 )
 
 func (server *Server) ListProducts(c echo.Context) error {
-
-	fmt.Println(c.Request().URL.String())
 
 	q := c.Request().URL.Query()
 	page, err := strconv.Atoi(q.Get("page"))

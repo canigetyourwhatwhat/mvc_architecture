@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-func (server *Server) AddItemToCart(c echo.Context) error {
-	var body entity.AddCartItemRequest
-	if err := c.Bind(&body); err != nil {
-		return c.JSON(http.StatusBadRequest, "failed to bind the struct with the request body: "+err.Error())
+func (server *Server) GetInProgressCart(c echo.Context) error {
+	sessionId := c.Param("session")
+	if sessionId == "" {
+		return c.JSON(http.StatusBadRequest, "session is missing")
 	}
 
-	session := &entity.Session{ID: body.SessionId}
+	session := &entity.Session{ID: sessionId}
 	session, err := session.GetSession(server.DB)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "Session is not valid")
@@ -26,46 +26,12 @@ func (server *Server) AddItemToCart(c echo.Context) error {
 
 	var emptyCart entity.Cart
 	cart, err := emptyCart.GetInProgressCartByUserId(server.DB, session.UserID)
-	if err != nil && err != sql.ErrNoRows {
+	if err == sql.ErrNoRows {
+		return c.JSON(http.StatusInternalServerError, "cart doesn't exist")
+	}
+	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed GetUserInfoByUsername: "+err.Error())
 	}
 
-	// If cart is not created
-	if cart == nil {
-		err = emptyCart.CreateCart(server.DB, session.UserID)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "Failed to create a cart: "+err.Error())
-		}
-
-		cart, err = cart.GetInProgressCartByUserId(server.DB, session.UserID)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "Failed to get a cart: "+err.Error())
-		}
-	}
-
-	// calculate price
-	var product *entity.Product
-	product, err = product.GetProductByCode(server.DB, body.ProductCode)
-	if err != nil && err != sql.ErrNoRows {
-		return c.JSON(http.StatusInternalServerError, "failed to get product: "+err.Error())
-	}
-
-	NetPrice := cart.NetPrice + product.Price*float32(body.Quantity)
-	TaxPrice := cart.TaxPrice + product.Price*float32(body.Quantity)*entity.GetTaxPercent()
-	TotalPrice := cart.TotalPrice + product.Price*float32(body.Quantity)*(1+entity.GetTaxPercent())
-
-	cartItem := &entity.CartItem{
-		ProductId:  product.ID,
-		CartId:     cart.ID,
-		Quantity:   body.Quantity,
-		NetPrice:   NetPrice,
-		TaxPrice:   TaxPrice,
-		TotalPrice: TotalPrice,
-	}
-	err = cartItem.CreateItemInCart(server.DB)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Failed to create item(s) in a cart: "+err.Error())
-	}
-
-	return c.JSON(http.StatusOK, "added product in the cart")
+	return c.JSON(http.StatusOK, cart)
 }

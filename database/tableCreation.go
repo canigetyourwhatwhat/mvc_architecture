@@ -1,17 +1,17 @@
 package database
 
 const createProductsTable = `CREATE TABLE IF NOT EXISTS products (
-    id                      VARBINARY(16) NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
-    code                    VARCHAR(4) NOT NULL,
-    name                    VARCHAR(50) NOT NULL,
-    price                   DECIMAL(10,4) NOT NULL DEFAULT 10,
-    stock                   INT NOT NULL DEFAULT 10,
-    short_description       VARCHAR(100) NOT NULL,
-    long_description        VARCHAR(255) NOT NULL,
-    created_at              DATETIME NOT NULL DEFAULT NOW(),
-    updated_at              DATETIME NOT NULL DEFAULT NOW() ON UPDATE now(),
-                            PRIMARY KEY (id),
-                            UNIQUE KEY (code)
+    id                       VARBINARY(16) NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
+    code                     VARCHAR(4) NOT NULL,
+    name                     VARCHAR(50) NOT NULL,
+    price                    DECIMAL(10,4) NOT NULL DEFAULT 10,
+    stock                    INT NOT NULL DEFAULT 10,
+    short_description        VARCHAR(100) NOT NULL,
+    long_description         VARCHAR(255) NOT NULL,
+    created_at               DATETIME NOT NULL DEFAULT NOW(),
+    updated_at               DATETIME NOT NULL DEFAULT NOW() ON UPDATE now(),
+                             PRIMARY KEY (id),
+                             UNIQUE KEY (code)
 );`
 
 const createUserTable = `CREATE TABLE IF NOT EXISTS users (
@@ -35,17 +35,17 @@ const createSessionTable = `CREATE TABLE IF NOT EXISTS sessions (
 );`
 
 const createCartItemTable = `CREATE TABLE IF NOT EXISTS cartItems (
-    id         VARBINARY(16)  NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
-    productId  VARBINARY(16)  NOT NULL,
-    cartId     VARBINARY(16)  NOT NULL,
-    quantity   INT            NOT NULL,
-    totalPrice DECIMAL(10, 4) NOT NULL,
-    taxPrice   DECIMAL(10, 4) NOT NULL,
-    netPrice   DECIMAL(10, 4) NOT NULL,
-    createdAt  DATETIME NOT NULL DEFAULT NOW(),
-    updatedAt  DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
-               PRIMARY KEY (id),
-               UNIQUE KEY(productId)
+    id           VARBINARY(16)  NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
+    productCode  VARCHAR(4) NOT NULL,
+    cartId       VARBINARY(16)  NOT NULL,
+    quantity     INT            NOT NULL,
+    totalPrice   DECIMAL(10, 4) NOT NULL,
+    taxPrice     DECIMAL(10, 4) NOT NULL,
+    netPrice     DECIMAL(10, 4) NOT NULL,
+    createdAt    DATETIME NOT NULL DEFAULT NOW(),
+    updatedAt    DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+                 PRIMARY KEY (id),
+                 UNIQUE KEY(productCode)
 );`
 
 const createCartTable = `CREATE TABLE IF NOT EXISTS carts (

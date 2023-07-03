@@ -51,3 +51,12 @@ func (c *Cart) CreateCart(db *sqlx.DB, userId string) error {
 	}
 	return nil
 }
+
+func (c *Cart) UpdateCart(db *sqlx.DB) error {
+	query := `UPDATE carts set netPrice = :netPrice, taxPrice = :taxPrice, totalPrice = :totalPrice`
+	_, err := db.NamedExec(query, c)
+	if err != nil {
+		return err
+	}
+	return nil
+}
