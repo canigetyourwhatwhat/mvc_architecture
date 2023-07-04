@@ -24,16 +24,16 @@ func (server *Server) AddItemToCart(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Session is already expired")
 	}
 
-	var emptyCart entity.Cart
-	cart, err := emptyCart.GetInProgressCartByUserId(server.DB, session.UserID)
+	var cart *entity.Cart
+	cart, err = cart.GetInProgressCartByUserId(server.DB, session.UserID)
 	if err != nil && err != sql.ErrNoRows {
 		return c.JSON(http.StatusInternalServerError, "failed GetUserInfoByUsername: "+err.Error())
 	}
 
 	var cartItem *entity.CartItem
-	cartItem, err = cartItem.GetCartItemByProductIdAndCartId(server.DB, body.ProductCode, cart.ID)
+	cartItem, err = cartItem.GetCartItemByProductIdAndCartId(server.DB, body.ProductInput.ProductCode, cart.ID)
 	if err != nil && err != sql.ErrNoRows {
-		return c.JSON(http.StatusInternalServerError, "failed GetUserInfoByUsername: "+err.Error())
+		return c.JSON(http.StatusInternalServerError, "failed GetCartItemByProductIdAndCartId: "+err.Error())
 	}
 	if cartItem != nil {
 		return c.JSON(http.StatusBadRequest, "This product is already added, please use update to update quantity")
@@ -41,7 +41,7 @@ func (server *Server) AddItemToCart(c echo.Context) error {
 
 	// If cart is not created
 	if cart == nil {
-		err = emptyCart.CreateCart(server.DB, session.UserID)
+		err = cart.CreateCart(server.DB, session.UserID)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, "Failed to create a cart: "+err.Error())
 		}
@@ -54,19 +54,19 @@ func (server *Server) AddItemToCart(c echo.Context) error {
 
 	// calculate price
 	var product *entity.Product
-	product, err = product.GetProductByCode(server.DB, body.ProductCode)
-	if err != nil && err != sql.ErrNoRows {
+	product, err = product.GetProductByCode(server.DB, body.ProductInput.ProductCode)
+	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed to get product: "+err.Error())
 	}
 
-	cart.NetPrice = cart.NetPrice + product.Price*float32(body.Quantity)
-	cart.TaxPrice = cart.TaxPrice + product.Price*float32(body.Quantity)*entity.GetTaxPercent()
-	cart.TotalPrice = cart.TotalPrice + product.Price*float32(body.Quantity)*(1+entity.GetTaxPercent())
+	cart.NetPrice = cart.NetPrice + product.Price*float32(body.ProductInput.Quantity)
+	cart.TaxPrice = cart.TaxPrice + product.Price*float32(body.ProductInput.Quantity)*entity.GetTaxPercent()
+	cart.TotalPrice = cart.TotalPrice + product.Price*float32(body.ProductInput.Quantity)*(1+entity.GetTaxPercent())
 
 	cartItem = &entity.CartItem{
 		ProductCode: product.Code,
 		CartId:      cart.ID,
-		Quantity:    body.Quantity,
+		Quantity:    body.ProductInput.Quantity,
 		NetPrice:    cart.NetPrice,
 		TaxPrice:    cart.TaxPrice,
 		TotalPrice:  cart.TotalPrice,

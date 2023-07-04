@@ -12,8 +12,9 @@ type Cart struct {
 	TaxPrice   float32    `db:"taxPrice"`
 	NetPrice   float32    `db:"netPrice"`
 	Status     CartStatus `db:"status"`
-	CreatedAt  time.Time  `db:"createdAt"`
-	UpdatedAt  time.Time  `db:"updatedAt"`
+	CartItems  []CartItem
+	CreatedAt  time.Time `db:"createdAt"`
+	UpdatedAt  time.Time `db:"updatedAt"`
 }
 
 type CartStatus int

@@ -18,14 +18,23 @@ type CartItem struct {
 }
 
 type AddCartItemRequest struct {
-	SessionId   string `json:"sessionId"`
-	ProductCode string `json:"productCode"`
-	Quantity    int    `json:"quantity"`
+	SessionId    string       `json:"sessionId"`
+	ProductInput ProductInput `json:"productInput"`
 }
 
 type DeleteCartItemRequest struct {
 	SessionId   string `json:"sessionId"`
 	ProductCode string `json:"productCode"`
+}
+
+type UpdateCartItem struct {
+	SessionId string         `json:"sessionId"`
+	Record    []ProductInput `json:"record"`
+}
+
+type ProductInput struct {
+	ProductCode string `json:"productCode"`
+	Quantity    int    `json:"quantity"`
 }
 
 func (ci *CartItem) CreateItemInCart(db *sqlx.DB) error {
@@ -53,4 +62,12 @@ func (ci *CartItem) GetCartItemByProductIdAndCartId(db *sqlx.DB, productCode str
 		return nil, err
 	}
 	return &cartItem, nil
+}
+
+func (ci *CartItem) GetCarItemsByCartId(db *sqlx.DB, cartId int) (cartItems []CartItem, err error) {
+	err = db.Select(&cartItems, "select * from cartItems where cartId = ?", cartId)
+	if err != nil {
+		return nil, err
+	}
+	return cartItems, nil
 }
