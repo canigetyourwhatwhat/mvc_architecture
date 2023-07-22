@@ -17,24 +17,13 @@ type CartItem struct {
 	UpdatedAt   time.Time `db:"updatedAt"`
 }
 
-type AddCartItemRequest struct {
-	SessionId    string       `json:"sessionId"`
-	ProductInput ProductInput `json:"productInput"`
-}
-
-type DeleteCartItemRequest struct {
-	SessionId   string `json:"sessionId"`
-	ProductCode string `json:"productCode"`
-}
-
-type UpdateCartItem struct {
-	SessionId string         `json:"sessionId"`
-	Record    []ProductInput `json:"record"`
-}
-
-type ProductInput struct {
+type CartItemRequest struct {
 	ProductCode string `json:"productCode"`
 	Quantity    int    `json:"quantity"`
+}
+
+type UpdateCartItemRequest struct {
+	Records []CartItemRequest `json:"records"`
 }
 
 func (ci *CartItem) CreateItemInCart(db *sqlx.DB) error {

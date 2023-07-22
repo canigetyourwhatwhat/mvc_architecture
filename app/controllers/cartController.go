@@ -6,29 +6,19 @@ import (
 	"github.com/labstack/echo/v4"
 	entity "mvc_go/app/models"
 	"net/http"
-	"time"
 )
 
 func (server *Server) GetInProgressCart(c echo.Context) error {
-	sessionId := c.Param("session")
-	if sessionId == "" {
-		return c.JSON(http.StatusBadRequest, "session is missing")
-	}
-
-	session := &entity.Session{ID: sessionId}
-	session, err := session.GetSession(server.DB)
+	var session entity.Session
+	err := session.ValidateSession(c, server.DB)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Session is not valid")
-	}
-
-	if session.ExpiresAt.Before(time.Now()) {
-		return c.JSON(http.StatusBadRequest, "Session is already expired")
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	var cart *entity.Cart
 	cart, err = cart.GetInProgressCartByUserId(server.DB, session.UserID)
 	if err == sql.ErrNoRows {
-		return c.JSON(http.StatusInternalServerError, "cart doesn't exist")
+		return c.JSON(http.StatusOK, "cart doesn't exist")
 	}
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed GetUserInfoByUsername: "+err.Error())
@@ -39,23 +29,19 @@ func (server *Server) GetInProgressCart(c echo.Context) error {
 	cartItems, err := cartItem.GetCarItemsByCartId(server.DB, cart.ID)
 	cart.CartItems = cartItems
 
-	return c.JSON(http.StatusOK, cart)
+	return c.JSON(http.StatusOK, *cart)
 }
 
 func (server *Server) UpdateCart(c echo.Context) error {
-	var body entity.UpdateCartItem
+	var body entity.UpdateCartItemRequest
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusBadRequest, "failed to bind the struct with the request body: "+err.Error())
 	}
 
-	session := &entity.Session{ID: body.SessionId}
-	session, err := session.GetSession(server.DB)
+	var session entity.Session
+	err := session.ValidateSession(c, server.DB)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Session is not valid")
-	}
-
-	if session.ExpiresAt.Before(time.Now()) {
-		return c.JSON(http.StatusBadRequest, "Session is already expired")
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	var cart *entity.Cart
@@ -85,7 +71,7 @@ func (server *Server) UpdateCart(c echo.Context) error {
 	var p entity.Product
 	var products []*entity.Product
 	var cartItem entity.CartItem
-	for _, productInfo := range body.Record {
+	for _, productInfo := range body.Records {
 		product, err := p.GetProductByCode(server.DB, productInfo.ProductCode)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, fmt.Sprintf("ProductCode %s doesn't exist", productInfo.ProductCode))

@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	ID        string    `db:"id"`
+	ID        int       `db:"id"`
 	FirstName string    `db:"firstName" json:"FirstName"`
 	LastName  string    `db:"lastName" json:"LastName"`
 	Username  string    `db:"username" json:"Username"`
@@ -24,10 +24,9 @@ type LoginInput struct {
 func (u *User) CreateUser(db *sqlx.DB) error {
 	query := `
 	INSERT INTO users
-	(id, firstName, lastName, username, password)
+	(firstName, lastName, username, password)
 	VALUES
 	(
-	 	:id,	
 		:firstName,
 	 	:lastName,
 	 	:username,
@@ -58,6 +57,14 @@ func (u *User) GetUserInfoByUsername(db *sqlx.DB, username string) (*User, error
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (u *User) GetUserInfoById(db *sqlx.DB, id int) error {
+	err := db.Get(u, "select * from users where id = ?", id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *User) ComparePassword(password string) error {

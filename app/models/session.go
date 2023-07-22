@@ -3,7 +3,10 @@ package entity
 import (
 	"crypto/rand"
 	"encoding/base32"
+	"errors"
+	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/labstack/echo/v4"
 	"io"
 	"strings"
 	"time"
@@ -11,8 +14,24 @@ import (
 
 type Session struct {
 	ID        string    `db:"id"`
-	UserID    string    `db:"userId"`
+	UserID    int       `db:"userId"`
 	ExpiresAt time.Time `db:"expiresAt"`
+}
+
+func (s *Session) ValidateSession(c echo.Context, db *sqlx.DB) error {
+	s.ID = c.Request().Header.Get("session")
+	if s.ID == "" {
+		return errors.New("session is missing")
+	}
+	err := s.GetSession(db)
+	if err != nil {
+		return errors.New("session is not valid")
+	}
+
+	if s.ExpiresAt.Before(time.Now()) {
+		return errors.New("session is already expired")
+	}
+	return nil
 }
 
 func (s *Session) CreateSessionID() (string, error) {
@@ -30,30 +49,30 @@ func (s *Session) CreateOrUpdateSession(db *sqlx.DB) error {
 	query := `
 	INSERT INTO sessions
 	(
-		id,
+	 	id,
 		userId,
 		expiresAt
 	)
 	VALUES
 	(
-		:id,
+	 	:id,
 		:userId,
 		:expiresAt
 	)
-	ON DUPLICATE KEY UPDATE id = :id, expiresAt = :expiresAt;
+	ON DUPLICATE KEY UPDATE id = :id, userId = :userId, expiresAt = :expiresAt;
 	`
 	_, err := db.NamedExec(query, s)
 	if err != nil {
+		fmt.Println("error here")
 		return err
 	}
 	return nil
 }
 
-func (s *Session) GetSession(db *sqlx.DB) (*Session, error) {
-	var session Session
-	err := db.Get(&session, "select * from sessions where id = ?", s.ID)
+func (s *Session) GetSession(db *sqlx.DB) error {
+	err := db.Get(s, "select * from sessions where id = ?", s.ID)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &session, nil
+	return nil
 }

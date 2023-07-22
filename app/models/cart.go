@@ -1,13 +1,14 @@
 package entity
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
 
 type Cart struct {
 	ID         int        `db:"id"`
-	UserId     string     `db:"userId"`
+	UserId     int        `db:"userId"`
 	TotalPrice float32    `db:"totalPrice"`
 	TaxPrice   float32    `db:"taxPrice"`
 	NetPrice   float32    `db:"netPrice"`
@@ -24,26 +25,33 @@ const (
 	Completed
 )
 
-func convertCartStatus(status CartStatus) string {
-	switch status {
-	case InProgress:
-		return "0"
-	case Completed:
-		return "1"
+func (c *Cart) GetCartById(db *sqlx.DB, id int) error {
+	err := db.Get(c, "select * from carts where id = ?", id)
+	if err != nil {
+		return err
 	}
-	return ""
+	return nil
 }
 
-func (c *Cart) GetInProgressCartByUserId(db *sqlx.DB, userId string) (*Cart, error) {
+func (c *Cart) GetCartByUserId(db *sqlx.DB, userId int) ([]Cart, error) {
+	var carts []Cart
+	err := db.Select(&carts, "select * from carts where userId = ?", userId)
+	if err != nil {
+		return nil, err
+	}
+	return carts, nil
+}
+
+func (c *Cart) GetInProgressCartByUserId(db *sqlx.DB, userId int) (*Cart, error) {
 	var cart Cart
-	err := db.Get(&cart, "select * from carts where userId = ? and status = ?", userId, convertCartStatus(InProgress))
+	err := db.Get(&cart, "select * from carts where userId = ? and status = ?", userId, InProgress)
 	if err != nil {
 		return nil, err
 	}
 	return &cart, nil
 }
 
-func (c *Cart) CreateCart(db *sqlx.DB, userId string) error {
+func (c *Cart) CreateCart(db *sqlx.DB, userId int) error {
 	cart := Cart{UserId: userId}
 	query := `INSERT INTO carts (userId) VALUES (:userId)`
 	_, err := db.NamedExec(query, cart)
@@ -54,9 +62,10 @@ func (c *Cart) CreateCart(db *sqlx.DB, userId string) error {
 }
 
 func (c *Cart) UpdateCart(db *sqlx.DB) error {
-	query := `UPDATE carts set netPrice = :netPrice, taxPrice = :taxPrice, totalPrice = :totalPrice`
+	query := `UPDATE carts set netPrice = :netPrice, taxPrice = :taxPrice, totalPrice = :totalPrice, status = :status where id = :id`
 	_, err := db.NamedExec(query, c)
 	if err != nil {
+		fmt.Println("\n\n hit ")
 		return err
 	}
 	return nil

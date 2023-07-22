@@ -13,7 +13,7 @@ func (server *Server) ListProducts(c echo.Context) error {
 	page, err := strconv.Atoi(q.Get("page"))
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusBadRequest, "page number is not incorrect"+err.Error())
 	}
 	if page <= 0 {
 		page = 1

@@ -16,11 +16,14 @@ func (server *Server) initializeRoutes() {
 	server.Router.GET("/products/:code", server.GetProductByCode)
 
 	server.Router.POST("/cart", server.AddItemToCart)
-	server.Router.DELETE("/cart", server.RemoveItemFromCart)
-	server.Router.GET("/cart/:session", server.GetInProgressCart)
+	server.Router.DELETE("/cart/:code", server.RemoveItemFromCart)
+	server.Router.GET("/cart", server.GetInProgressCart)
 	server.Router.PUT("/cart", server.UpdateCart)
 
-	server.Router.POST("/payment", server.AddItemToCart)
+	server.Router.POST("/payment", server.CreatePayment)
+
+	server.Router.GET("/order/:id", server.GetOrder)
+	server.Router.GET("/order", server.ListOrders)
 
 	//staticFileDirectory := http.Dir("./assets/")
 	//staticFileHandler := http.StripPrefix("/public/", http.FileServer(staticFileDirectory))

@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	entity "mvc_go/app/models"
 	"net/http"
@@ -26,8 +25,6 @@ func (server *Server) RegisterUser(c echo.Context) error {
 	if err = user.HashPassword(); err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed to hash password: "+err.Error())
 	}
-
-	user.ID = uuid.New().String()[:16]
 
 	err = user.CreateUser(server.DB)
 	if err != nil {

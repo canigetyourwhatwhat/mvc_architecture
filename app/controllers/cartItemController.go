@@ -5,38 +5,24 @@ import (
 	"github.com/labstack/echo/v4"
 	entity "mvc_go/app/models"
 	"net/http"
-	"time"
 )
 
 func (server *Server) AddItemToCart(c echo.Context) error {
-	var body entity.AddCartItemRequest
+	var body entity.CartItemRequest
 	if err := c.Bind(&body); err != nil {
 		return c.JSON(http.StatusBadRequest, "failed to bind the struct with the request body: "+err.Error())
 	}
 
-	session := &entity.Session{ID: body.SessionId}
-	session, err := session.GetSession(server.DB)
+	var session entity.Session
+	err := session.ValidateSession(c, server.DB)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Session is not valid")
-	}
-
-	if session.ExpiresAt.Before(time.Now()) {
-		return c.JSON(http.StatusBadRequest, "Session is already expired")
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	var cart *entity.Cart
 	cart, err = cart.GetInProgressCartByUserId(server.DB, session.UserID)
 	if err != nil && err != sql.ErrNoRows {
 		return c.JSON(http.StatusInternalServerError, "failed GetUserInfoByUsername: "+err.Error())
-	}
-
-	var cartItem *entity.CartItem
-	cartItem, err = cartItem.GetCartItemByProductIdAndCartId(server.DB, body.ProductInput.ProductCode, cart.ID)
-	if err != nil && err != sql.ErrNoRows {
-		return c.JSON(http.StatusInternalServerError, "failed GetCartItemByProductIdAndCartId: "+err.Error())
-	}
-	if cartItem != nil {
-		return c.JSON(http.StatusBadRequest, "This product is already added, please use update to update quantity")
 	}
 
 	// If cart is not created
@@ -52,21 +38,30 @@ func (server *Server) AddItemToCart(c echo.Context) error {
 		}
 	}
 
+	var cartItem *entity.CartItem
+	cartItem, err = cartItem.GetCartItemByProductIdAndCartId(server.DB, body.ProductCode, cart.ID)
+	if err != nil && err != sql.ErrNoRows {
+		return c.JSON(http.StatusInternalServerError, "failed GetCartItemByProductIdAndCartId: "+err.Error())
+	}
+	if cartItem != nil {
+		return c.JSON(http.StatusBadRequest, "This product is already added, please use update to update quantity")
+	}
+
 	// calculate price
 	var product *entity.Product
-	product, err = product.GetProductByCode(server.DB, body.ProductInput.ProductCode)
+	product, err = product.GetProductByCode(server.DB, body.ProductCode)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed to get product: "+err.Error())
 	}
 
-	cart.NetPrice = cart.NetPrice + product.Price*float32(body.ProductInput.Quantity)
-	cart.TaxPrice = cart.TaxPrice + product.Price*float32(body.ProductInput.Quantity)*entity.GetTaxPercent()
-	cart.TotalPrice = cart.TotalPrice + product.Price*float32(body.ProductInput.Quantity)*(1+entity.GetTaxPercent())
+	cart.NetPrice = cart.NetPrice + product.Price*float32(body.Quantity)
+	cart.TaxPrice = cart.TaxPrice + product.Price*float32(body.Quantity)*entity.GetTaxPercent()
+	cart.TotalPrice = cart.TotalPrice + product.Price*float32(body.Quantity)*(1+entity.GetTaxPercent())
 
 	cartItem = &entity.CartItem{
 		ProductCode: product.Code,
 		CartId:      cart.ID,
-		Quantity:    body.ProductInput.Quantity,
+		Quantity:    body.Quantity,
 		NetPrice:    cart.NetPrice,
 		TaxPrice:    cart.TaxPrice,
 		TotalPrice:  cart.TotalPrice,
@@ -85,19 +80,15 @@ func (server *Server) AddItemToCart(c echo.Context) error {
 }
 
 func (server *Server) RemoveItemFromCart(c echo.Context) error {
-	var body entity.DeleteCartItemRequest
-	if err := c.Bind(&body); err != nil {
-		return c.JSON(http.StatusBadRequest, "failed to bind the struct with the request body: "+err.Error())
+	code := c.Param("code")
+	if code == "" {
+		return c.JSON(http.StatusBadRequest, "product code is missing")
 	}
 
-	session := &entity.Session{ID: body.SessionId}
-	session, err := session.GetSession(server.DB)
+	var session entity.Session
+	err := session.ValidateSession(c, server.DB)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Session is not valid")
-	}
-
-	if session.ExpiresAt.Before(time.Now()) {
-		return c.JSON(http.StatusBadRequest, "Session is already expired")
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	var emptyCart entity.Cart
@@ -111,7 +102,7 @@ func (server *Server) RemoveItemFromCart(c echo.Context) error {
 
 	// calculate price
 	var cartItem *entity.CartItem
-	cartItem, err = cartItem.GetCartItemByProductIdAndCartId(server.DB, body.ProductCode, cart.ID)
+	cartItem, err = cartItem.GetCartItemByProductIdAndCartId(server.DB, code, cart.ID)
 	if err == sql.ErrNoRows {
 		return c.JSON(http.StatusInternalServerError, "This product is not in the cart")
 	}
