@@ -49,8 +49,8 @@ func (server *Server) GetOrder(c echo.Context) error {
 	}
 
 	// collect all the cart items in the cart
-	var cartItem entity.CartItem
-	cartItems, err := cartItem.GetCarItemsByCartId(server.DB, cart.ID)
+	cartItem := entity.CartItem{CartId: cart.ID}
+	cartItems, err := cartItem.GetCartItemsByCartId(server.DB)
 	cart.CartItems = cartItems
 
 	res := entity.OrderResponse{
@@ -70,7 +70,7 @@ func (server *Server) ListOrders(c echo.Context) error {
 	}
 
 	var cart entity.Cart
-	carts, err := cart.GetCartByUserId(server.DB, session.UserID)
+	carts, err := cart.GetCartByUserIdAndCompleted(server.DB, session.UserID)
 	if err == sql.ErrNoRows {
 		return c.JSON(http.StatusOK, "No order has been created")
 	}
@@ -78,12 +78,20 @@ func (server *Server) ListOrders(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Failed to get carts by user Id"+err.Error())
 	}
 
-	var cartItem entity.CartItem
 	var cartItems []entity.CartItem
 	for i := range carts {
-		newCartItems, err := cartItem.GetCarItemsByCartId(server.DB, carts[i].ID)
+		cartItem := entity.CartItem{CartId: carts[i].ID}
+		newCartItems, err := cartItem.GetCartItemsByCartId(server.DB)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "Failed to get cart item by cart Id")
+			return c.JSON(http.StatusInternalServerError, "Failed GetCartItemsByCartId")
+		}
+		for i := range newCartItems {
+			p := entity.Product{Code: newCartItems[i].ProductCode}
+			err = p.GetProductByCode(server.DB)
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, "Failed GetProductByCode")
+			}
+			newCartItems[i].Product = &p
 		}
 		cartItems = append(cartItems, newCartItems...)
 	}

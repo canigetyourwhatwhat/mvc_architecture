@@ -18,11 +18,6 @@ type OrderResponse struct {
 	Cart    Cart    `json:"cart"`
 }
 
-type OrderListResponse struct { //talk with front-end to see what they really need, modify as needed
-	TotalPrice float32
-	CreatedAt  time.Time
-}
-
 func (o *Order) CreateOrder(db *sqlx.DB) error {
 	query := `INSERT INTO orders (userId, cartId, paymentId) VALUES (:userId, :cartId, :paymentId)`
 	_, err := db.NamedExec(query, *o)

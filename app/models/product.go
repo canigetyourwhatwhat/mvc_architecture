@@ -37,13 +37,10 @@ func (p *Product) GetProducts(db *sqlx.DB, perPage int, page int) ([]Product, in
 	return products, count, nil
 }
 
-func (p *Product) GetProductByCode(db *sqlx.DB, code string) (*Product, error) {
-	var product Product
-
-	err := db.Get(&product, "select * from Products where code = ?", code)
+func (p *Product) GetProductByCode(db *sqlx.DB) error {
+	err := db.Get(p, "select * from Products where code = ?", p.Code)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	return &product, nil
+	return nil
 }

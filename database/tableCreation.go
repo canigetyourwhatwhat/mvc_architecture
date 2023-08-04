@@ -47,9 +47,7 @@ const createCartItemTable = `CREATE TABLE IF NOT EXISTS cartItems (
     createdAt    DATETIME       NOT NULL DEFAULT NOW(),
     updatedAt    DATETIME       NOT NULL DEFAULT NOW() ON UPDATE NOW(),
                  PRIMARY KEY (id),
-                 UNIQUE KEY(productCode),
                  CONSTRAINT cart_item_to_cart foreign key (cartId) references carts(id)
-                 
 );`
 
 const createCartTable = `CREATE TABLE IF NOT EXISTS carts (

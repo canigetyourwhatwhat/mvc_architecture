@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
@@ -42,6 +41,15 @@ func (c *Cart) GetCartByUserId(db *sqlx.DB, userId int) ([]Cart, error) {
 	return carts, nil
 }
 
+func (c *Cart) GetCartByUserIdAndCompleted(db *sqlx.DB, userId int) ([]Cart, error) {
+	var carts []Cart
+	err := db.Select(&carts, "select * from carts where userId = ? and status = 1", userId)
+	if err != nil {
+		return nil, err
+	}
+	return carts, nil
+}
+
 func (c *Cart) GetInProgressCartByUserId(db *sqlx.DB, userId int) (*Cart, error) {
 	var cart Cart
 	err := db.Get(&cart, "select * from carts where userId = ? and status = ?", userId, InProgress)
@@ -65,7 +73,6 @@ func (c *Cart) UpdateCart(db *sqlx.DB) error {
 	query := `UPDATE carts set netPrice = :netPrice, taxPrice = :taxPrice, totalPrice = :totalPrice, status = :status where id = :id`
 	_, err := db.NamedExec(query, c)
 	if err != nil {
-		fmt.Println("\n\n hit ")
 		return err
 	}
 	return nil

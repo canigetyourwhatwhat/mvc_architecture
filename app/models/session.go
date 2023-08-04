@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"errors"
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"io"
@@ -63,7 +62,6 @@ func (s *Session) CreateOrUpdateSession(db *sqlx.DB) error {
 	`
 	_, err := db.NamedExec(query, s)
 	if err != nil {
-		fmt.Println("error here")
 		return err
 	}
 	return nil

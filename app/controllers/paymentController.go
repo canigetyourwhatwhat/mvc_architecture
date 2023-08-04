@@ -40,17 +40,6 @@ func (server *Server) CreatePayment(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Failed creating payment: "+err.Error())
 	}
 
-	err = payment.GetPaymentById(server.DB, paymentId)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Failed creating payment: "+err.Error())
-	}
-
-	var user entity.User
-	err = user.GetUserInfoById(server.DB, session.UserID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Failed getting user: "+err.Error())
-	}
-
 	order := entity.Order{
 		UserId:    cart.UserId,
 		CartId:    cart.ID,

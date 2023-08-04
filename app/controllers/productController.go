@@ -43,8 +43,8 @@ func (server *Server) GetProductByCode(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "product code is missing")
 	}
 
-	productModel := entity.Product{}
-	product, err := productModel.GetProductByCode(server.DB, code)
+	product := entity.Product{Code: code}
+	err := product.GetProductByCode(server.DB)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 

@@ -25,8 +25,11 @@ func (server *Server) GetInProgressCart(c echo.Context) error {
 	}
 
 	// collect all the cart items in the cart
-	var cartItem entity.CartItem
-	cartItems, err := cartItem.GetCarItemsByCartId(server.DB, cart.ID)
+	cartItem := entity.CartItem{CartId: cart.ID}
+	cartItems, err := cartItem.GetCartItemsByCartId(server.DB)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "failed GetCartItemsByCartId: "+err.Error())
+	}
 	cart.CartItems = cartItems
 
 	return c.JSON(http.StatusOK, *cart)
@@ -68,26 +71,31 @@ func (server *Server) UpdateCart(c echo.Context) error {
 	cart.TaxPrice = 0
 	cart.TotalPrice = 0
 
-	var p entity.Product
-	var products []*entity.Product
-	var cartItem entity.CartItem
+	// Delete all the items in the cart
+	cartItem := entity.CartItem{CartId: cart.ID}
+	err = cartItem.DeleteItemInCart(server.DB)
+
 	for _, productInfo := range body.Records {
-		product, err := p.GetProductByCode(server.DB, productInfo.ProductCode)
+		product := &entity.Product{Code: productInfo.ProductCode}
+		err = product.GetProductByCode(server.DB)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, fmt.Sprintf("ProductCode %s doesn't exist", productInfo.ProductCode))
 		}
-		cartItem.CartId = cart.ID
-		cartItem.Quantity = productInfo.Quantity
-		cartItem.ProductCode = productInfo.ProductCode
-		cartItem.NetPrice = product.Price * float32(productInfo.Quantity)
-		cartItem.TaxPrice = product.Price * float32(productInfo.Quantity) * entity.GetTaxPercent()
-		cartItem.TotalPrice = product.Price * float32(productInfo.Quantity) * (1 + entity.GetTaxPercent())
+
+		cartItem = entity.CartItem{
+			CartId:      cart.ID,
+			Quantity:    productInfo.Quantity,
+			ProductCode: productInfo.ProductCode,
+			NetPrice:    product.Price * float32(productInfo.Quantity),
+			TaxPrice:    product.Price * float32(productInfo.Quantity) * entity.GetTaxPercent(),
+			TotalPrice:  product.Price * float32(productInfo.Quantity) * (1 + entity.GetTaxPercent()),
+		}
 
 		err = cartItem.CreateItemInCart(server.DB)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, fmt.Sprintf("ProductCode %s doesn't exist", productInfo.ProductCode))
+			return c.JSON(http.StatusInternalServerError, "Failed CreateItemInCart: "+err.Error())
 		}
-		products = append(products, product)
+
 		cart.NetPrice += cartItem.NetPrice
 		cart.TaxPrice += cartItem.TaxPrice
 		cart.TotalPrice += cartItem.TotalPrice
